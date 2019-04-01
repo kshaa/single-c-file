@@ -10,5 +10,6 @@ Three changes were introduced:
 
 Note: This code has no guarantees of working.
 
-Personally I use it as described in this Gist:
-https://gist.github.com/kshaa/9fb61a297df4a3aae64a36493f5ff01e
+# Usage
+- https://gist.github.com/kshaa/9fb61a297df4a3aae64a36493f5ff01e
+- https://gist.github.com/kshaa/7e22dc9d1c0e0b3948fb5b89a68b66c6
