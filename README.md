@@ -9,3 +9,6 @@ Three changes were introduced:
 - Support for `define`, `ifndef` & `endif`
 
 Note: This code has no guarantees of working.
+
+Personally I use it as described in this Gist:
+https://gist.github.com/kshaa/9fb61a297df4a3aae64a36493f5ff01e
