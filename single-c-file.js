@@ -17,18 +17,48 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
+var path = require('path');
 var fs = require('fs');
-var newFile = ['//This file was created with Single-C-File','//Single-C-File was developed by Adrian Dawid.'];
+var newFile = [];
 var headers = [];
 var dontImportHeaders = false;
+var defines = [];
 
-function addFile(fileContent)
+function addFile(fileContent, parentFileName = null)
 {
+  var parentPath = parentFileName ? path.dirname(parentFileName) : null;
   var readerActive = true;
+  var lockedNdefValue = null;
+  newFile.push("");
+  newFile.push("// Begining of include '" + parentFileName + "'");
   for(lineNr in fileContent)
   {
     if(fileContent[lineNr])
     {
+      if (lockedNdefValue !== null) {
+          if (fileContent[lineNr].substring(0,2) != "//"  && fileContent[lineNr].substring(0,6) == "#endif") {
+            lockedNdefValue = null;
+          }
+
+          break;
+      }
+      if (fileContent[lineNr].substring(0,2) != "//"  && fileContent[lineNr].substring(0,6) == "#endif") {
+        continue;
+      }
+      if(fileContent[lineNr].substring(0,2) != "//"  && fileContent[lineNr].substring(0,7) == "#ifndef")
+      {
+        var ndefineValue = fileContent[lineNr].replace("#ifndef ","");
+        if (defines.includes(ndefineValue)) {
+            lockedNdefValue = ndefineValue;
+        }
+        continue;
+      }
+      if(fileContent[lineNr].substring(0,2) != "//"  && fileContent[lineNr].substring(0,7) == "#define")
+      {
+        var defineValue = fileContent[lineNr].replace("#define ","");
+        defines.push(defineValue);
+        continue;
+      }
       if(fileContent[lineNr].substring(0,2) != "//"  && fileContent[lineNr].substring(0,8) != "#include")
       {
         newFile.push(fileContent[lineNr]);
@@ -47,12 +77,13 @@ function addFile(fileContent)
                 headerIsNew = false;
             }
         }
+        var absoluteFileName = (parentPath + '/' + tmpFileName).replace("/./","/"); 
         try
         {
           if(headerIsNew && !dontImportHeaders)
           {
-            var array = fs.readFileSync(tmpFileName).toString().split("\n");
-            addFile(array);
+            var array = fs.readFileSync(absoluteFileName).toString().split("\n");
+            addFile(array, absoluteFileName);                    
           }
           if(dontImportHeaders)
           {
@@ -69,6 +100,8 @@ function addFile(fileContent)
       }
     }
   }
+  newFile.push("// End of include '" + parentFileName + "'");
+  newFile.push("");
 }
 
 function merge(file,newFileName)
@@ -78,7 +111,7 @@ function merge(file,newFileName)
       if(file[lineNr])
       {
           var array = fs.readFileSync(file[lineNr]).toString().split("\n");
-          addFile(array);
+          addFile(array, "./" + newFileName);
       }
   }
   var tmpFile = fs.createWriteStream(newFileName);
@@ -121,7 +154,10 @@ function main()
         return;
       }
       var array = data.toString().split("\n");
-      var newFileName = fileName.split(".")[0] + "_merged.cxx";
+      var newFileName = process.argv[3];
+      if (!newFileName) {
+        newFileName = fileName.split(".")[0] + "_merged.cxx";
+      }
       merge(array,newFileName);
   });
 }
