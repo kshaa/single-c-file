@@ -29,27 +29,37 @@ function addFile(fileContent, parentFileName = null)
   var parentPath = parentFileName ? path.dirname(parentFileName) : null;
   var readerActive = true;
   var lockedNdefValue = null;
+  var lockedDefValue = null;
   newFile.push("");
   newFile.push("// Begining of include '" + parentFileName + "'");
   for(lineNr in fileContent)
   {
     if(fileContent[lineNr])
     {
-      if (lockedNdefValue !== null) {
-          if (fileContent[lineNr].substring(0,2) != "//"  && fileContent[lineNr].substring(0,6) == "#endif") {
+      if (lockedNdefValue !== null || lockedDefValue !== null) {
+          if (fileContent[lineNr].substring(0,2) != "//"  && fileContent[lineNr].trim().substring(0,6) == "#endif") {
             lockedNdefValue = null;
+            lockedDefValue = null;
           }
 
-          break;
+          continue;
       }
-      if (fileContent[lineNr].substring(0,2) != "//"  && fileContent[lineNr].substring(0,6) == "#endif") {
+      if (fileContent[lineNr].substring(0,2) != "//"  && fileContent[lineNr].trim().substring(0,6) == "#endif") {
         continue;
       }
-      if(fileContent[lineNr].substring(0,2) != "//"  && fileContent[lineNr].substring(0,7) == "#ifndef")
+      if(fileContent[lineNr].substring(0,2) != "//"  && fileContent[lineNr].trim().substring(0,7) == "#ifndef")
       {
         var ndefineValue = fileContent[lineNr].replace("#ifndef ","");
         if (defines.includes(ndefineValue)) {
             lockedNdefValue = ndefineValue;
+        }
+        continue;
+      }
+      if(fileContent[lineNr].substring(0,2) != "//"  && fileContent[lineNr].trim().substring(0,6) == "#ifdef")
+      {
+        var lockedDefValue = fileContent[lineNr].replace("#ifdef ","");
+        if (!defines.includes(lockedDefValue)) {
+            lockedDefValue = lockedDefValue;
         }
         continue;
       }
@@ -100,7 +110,7 @@ function addFile(fileContent, parentFileName = null)
       }
     }
   }
-  newFile.push("// End of include '" + parentFileName + "'");
+  newFile.push("// End      of include '" + parentFileName + "'");
   newFile.push("");
 }
 
